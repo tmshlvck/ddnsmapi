@@ -30,9 +30,11 @@ sudo apt-get install knot knot-dnsutils python3-pip python3-poetry git
 Create server directory and clone this repo:
 ```
 sudo mkdir -p /var/lib/ddnsm
-cd /var/lib/ddnsm
+cd /var/lib/
 sudo git clone https://github.com/tmshlvck/ddnsmapi.git
-chown -R knot:knot /var/lib/ddnsm
+sudo mv ddnsmapi ddnsm
+sudo chown -R knot:knot /var/lib/ddnsm
+cd /var/lib/ddnsm
 sudo -u knot poetry build
 sudo pip install dist/ddnsmapi-*-py3-none-any.whl
 sudo mkdir /etc/ddnsm/
@@ -103,7 +105,7 @@ And add logrotate prescription for the `/var/lib/knot/ddnsm-server.log` file (mo
 according to your `server.yaml` config):
 
 ```
-sudo bash -c `cat <<EOF >/etc/logrotate.d/ddnsmapi
+sudo bash -c 'cat <<EOF >/etc/logrotate.d/ddnsmapi
 /var/lib/knot/ddnsm-server.log {
 	weekly
 	missingok
