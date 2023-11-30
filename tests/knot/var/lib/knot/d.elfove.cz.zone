@@ -1,0 +1,11 @@
+;; Zone dump (Knot DNS 2.7.8)
+d.elfove.cz.        	3600	SOA	krtek.taaa.eu. tmshlvck.gmail.com. 3273 604800 86400 2419200 604800
+d.elfove.cz.        	3600	NS	krtek.taaa.eu.
+bgplab.d.elfove.cz. 	60	AAAA	2001:1488:fffe:20::174
+hranostaj.d.elfove.cz.	60	AAAA	2a00:1028:83c0:250e:bd72:86ab:c6bd:956a
+mamut.d.elfove.cz.  	60	AAAA	2a00:1028:83c0:250e:e139:8e77:cd08:4de
+slepice.d.elfove.cz.	60	AAAA	2a00:1028:83c0:250c:c4c:5f74:7409:bbf3
+tapir.d.elfove.cz.  	60	AAAA	2a02:8308:5080:ca00:2ca8:ab28:fafa:7842
+velryba.d.elfove.cz.	60	AAAA	2001:1488:fffe:20::171
+;; Written 8 records
+;; Time 2020-09-09 19:01:31 CEST

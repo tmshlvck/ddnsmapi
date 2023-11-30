@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>DDNSM</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body>
+  <div x-data="{status: {}, zones:[], remotes:[], zoneedit: null, apilinks: false, logview: false}"
+    x-init="zones=await get_zones(); remotes=await get_remotes();">
+    <div>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light mx-5">
+        <a class="navbar-brand" href="#">DDNSM</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav"
+          aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="main-nav">
+          <ul class="navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="#" @click="zoneedit=null; logview=false">Zones</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="#" @click="logview=true; zoneedit=null;">Log</a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="collapse navbar-collapse justify-content-end" id="api-nav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="#" @click="apilinks=!apilinks">Show API links (<span
+                  x-text="apilinks"></span>)</a>
+            </li>
+          </ul>
+        </div>
+
+      </nav>
+    </div>
+
+    <template x-if="(zoneedit == null) && (logview == false)">
+      <div class="container" id="content">
+        <h3>Zones</h3>
+        <div class="row my-5">
+          <div x-data="{ zef: { domain: null} }">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Domain FQDN</th>
+                  <th>zone settings</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[zid,z] in zones">
+                  <tr class="table-default">
+                    <td x-text="zid"></td>
+                    <td class="font-monospace">
+                      <template x-if="apilinks"><a x-bind:href="'{{ prefix }}/zone/'+zid+'/rrs'" x-text="z.domain"></a></template>
+                      <template x-if="!apilinks"><span x-text="z.domain"></span></template>
+                    </td>
+                    <td>
+                      <ul>
+                        <template x-for="[k,v] in Object.entries(z)">
+                          <template x-if="(k != 'domain') && (v != null)">
+                            <li><span class="font-monospace" x-text="k"></span>: <span x-text="v"></span></li>
+                          </template>
+                        </template>
+                      </ul>
+                    </td>
+                    <td>
+                      <button type="button" @click="zoneedit=zid" class="btn btn-primary">Edit RRs</button>
+                    </td>
+                    <td>
+                      <button type="button" @click="status = await delete_zone(zid); zones=await get_zones()"
+                        class="btn btn-outline-danger">Delete</button>
+                    </td>
+                  </tr>
+                </template>
+                <form>
+                  <tr class="table-active">
+                    <td class="align-middle">+</td>
+                    <td>
+                      <div class="form-group">
+                        <label for="domain">FQDN</label>
+                        <input type="text" class="form-control font-monospace" id="domain" name="domain"
+                          x-model="zef.domain" placeholder="domain.tld.">
+                      </div>
+                    </td>
+                    <td>
+                      <div class="form-group">
+                        <label for="master">master</label>
+                        <input type="text" class="form-control font-monospace" id="master" name="master"
+                          placeholder="0.0.0.0 or 0000:0000:0000::0000" x-model="zef.master">
+                      </div>
+                      <div class="form-group">
+                        <label for="notify">notify</label>
+                        <select id="notify" name="notify" x-model="zef.notify" class="form-select font-monospace">
+                          <option value="null" selected>-</option>
+                          <template x-for="[remid,rem] in remotes">
+                            <option x-bind:value="rem.id"><span x-test="rem.id"></span>(<span x-text="rem.address"></span>)</option>
+                          </template>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="storage">storage</label>
+                        <input type="text" class="form-control font-monospace" id="storage" name="storage"
+                          placeholder="/var/lib/knot/" x-model="zef.storage">
+                      </div>
+                    </td>
+                    <td class="align-middle">
+                      <button type="button" @click="status = await create_zone(zef); zones=await get_zones()"
+                        class="btn btn-primary">Create</button>
+                    </td>
+                    <td></td>
+                  </tr>
+                </form>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="logview == true">
+      <div class="container" id="content">
+        <h3>Logs</h3>
+        <div class="row my-5">
+          <div x-data="{activepage: 0, pagesize: 100, logdata: {data: [], entries: 0}}"
+            x-init="logdata=await get_log(activepage,pagesize)">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Record</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="l in logdata.data">
+                  <tr class="table-default">
+                    <td class="font-monospace" x-text="l"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+            <p>
+              Total entries: <span x-text="logdata.entries"></span>
+            </p>
+            <nav aria-label="logpaginate">
+              <ul class="pagination">
+                <li class="page-item" x-bind:class="activepage==0?'disabled':''">
+                  <a href="#" class="page-link"
+                    @click="activepage=activepage-1; logdata=await get_log(activepage,pagesize)">Previous</a>
+                </li>
+                <template
+                  x-for="pnr in Array.from(Array.from({ length: Math.floor(logdata.entries/pagesize)+1 }).keys())">
+                  <li class="page-item" x-bind:class="activepage==pnr?'active':''">
+                    <a href="#" class="page-link" @click="activepage=pnr; logdata=await get_log(activepage,pagesize)">
+                      <span x-text="pnr+1"></span>
+                      <template x-if="pnr == activepage">
+                        <span class="visually-hidden">(current)</span>
+                      </template>
+                    </a>
+                  </li>
+                </template>
+                <li class="page-item" x-bind:class="activepage>=Math.floor(logdata.entries/pagesize)?'disabled':''">
+                  <a href="#" class="page-link"
+                    @click="activepage=activepage+1; logdata=await get_log(activepage,pagesize)">Next</a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="zoneedit != null">
+      <div x-data="{rrs:[], rredit: null, rref: null, ddnshelprr: null}" x-init="rrs=await get_rrs(zoneedit)">
+        <div class="container" id="content">
+          <h3>Zone <span x-text="zones[zoneedit][1].domain"></span></h3>
+
+          <!--<div class="row my-5">
+        <h5>Zone configuration:</h5>
+        <ul>
+          <template x-for="[zk,zv] in Object.entries(zones[zoneedit][1])">
+            <li class="font-monospace" x-text="zk + ' : ' + zv"></li>
+          </template>
+        </ul>
+        </div> -->
+
+          <div class="row my-5">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Domain</th>
+                  <th>RTYPE</th>
+                  <th>RCLASS</th>
+                  <th>TTL</th>
+                  <th>RDATA</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[rridx,rr] in rrs">
+                  <div style="display:contents">
+                    <template x-if="(rridx != rredit) && (rridx != rrs.length)">
+                      <tr class="table-default">
+                        <td x-text="rridx"></td>
+                        <td class="font-monospace">
+                          <template x-if="apilinks && (rr.rtype=='A' || rr.rtype=='AAAA')">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#DDNSHelpModal" @click="ddnshelprr=rr"
+                              x-text="rr.name"></a>
+                          </template>
+                          <template x-if="!(apilinks && (rr.rtype=='A' || rr.rtype=='AAAA'))">
+                            <spann x-text="rr.name"></spann>
+                          </template>
+                        </td>
+                        <td class="font-monospace" x-text="rr.rtype"></td>
+                        <td class="font-monospace" x-text="rr.rclass"></td>
+                        <td class="font-monospace" x-text="rr.ttl"></td>
+                        <template x-if="rr.rtype == 'SOA'">
+                          <td>
+                            <ul>
+                              <li class="font-monospace" x-text="'mname: '+ rr.rdata.mname"></li>
+                              <li class="font-monospace" x-text="'rname: '+ rr.rdata.rname"></li>
+                              <li class="font-monospace" x-text="'serial: '+ rr.rdata.serial"></li>
+                              <li class="font-monospace" x-text="'refresh: '+ rr.rdata.refresh"></li>
+                              <li class="font-monospace" x-text="'retry: '+ rr.rdata.retry"></li>
+                              <li class="font-monospace" x-text="'expire: '+ rr.rdata.expire"></li>
+                              <li class="font-monospace" x-text="'minimum: '+ rr.rdata.minimum"></li>
+                            </ul>
+                          </td>
+                        </template>
+                        <template x-if="rr.rtype == 'MX'">
+                          <td>
+                            <ul>
+                              <li class="font-monospace" x-text="'priority: '+ rr.rdata.priority"></li>
+                              <li class="font-monospace" x-text="'host: '+ rr.rdata.host"></li>
+                            </ul>
+                          </td>
+                        </template>
+                        <template x-if="rr.rtype == 'CAA'">
+                          <td>
+                            <ul>
+                              <li class="font-monospace" x-text="'priority: '+ rr.rdata.priority"></li>
+                              <li class="font-monospace" x-text="'tag: '+ rr.rdata.tag"></li>
+                              <li class="font-monospace" x-text="'value: '+ rr.rdata.value"></li>
+                            </ul>
+                          </td>
+                        </template>
+                        <template x-if="rr.rtype == 'SRV'">
+                          <td>
+                            <ul>
+                              <li class="font-monospace" x-text="'priority: '+ rr.rdata.priority"></li>
+                              <li class="font-monospace" x-text="'weight: '+ rr.rdata.weight"></li>
+                              <li class="font-monospace" x-text="'port: '+ rr.rdata.port"></li>
+                              <li class="font-monospace" x-text="'host: '+ rr.rdata.host"></li>
+                            </ul>
+                          </td>
+                        </template>
+                        <template x-if="rr.rtype != 'SOA' && rr.rtype != 'MX'">
+                          <td class="font-monospace" x-text="rr.rdata.value"></td>
+                        </template>
+                        <td>
+                          <template x-if="rredit == null">
+                            <button type="button" @click="rredit=rridx" class="btn btn-primary">Edit</button>
+                          </template>
+                          <template x-if="rredit != null">
+                            <button type="button" @click="rredit=rridx" class="btn btn-outline-primary">Edit</button>
+                          </template>
+                        </td>
+                        <td>
+                          <button type="button"
+                            @click="status = await delete_rr(zoneedit,rridx); rrs=await get_rrs(zoneedit)"
+                            class="btn btn-outline-danger">Delete</button>
+                        </td>
+                      </tr>
+                    </template>
+
+                    <template x-if="rridx == rredit">
+                      <tr class="table-active" x-init="rref=rr">
+                        <form>
+                          <td><span x-text="rridx"></span></td>
+                          <td><input type="text" class="form-control font-monospace" id="rname" name="rname"
+                              placeholder="name" x-model="rref.name"></td>
+                          <td><select id="rtype" name="rtype" x-model="rref.rtype" class="form-select font-monospace">
+                              <option value="SOA" x-bind:selected="rref.rtype == 'SOA'">SOA</option>
+                              <option value="NS" x-bind:selected="rref.rtype == 'NS'">NS</option>
+                              <option value="A" x-bind:selected="rref.rtype == 'A'">A</option>
+                              <option value="AAAA" x-bind:selected="rref.rtype == 'AAAA'">AAAA</option>
+                              <option value="CNAME" x-bind:selected="rref.rtype == 'CNAME'">CNAME</option>
+                              <option value="SRV" x-bind:selected="rref.rtype == 'SRV'">SRV</option>
+                              <option value="CAA" x-bind:selected="rref.rtype == 'CAA'">CAA</option>
+                              <option value="TXT" x-bind:selected="rref.rtype == 'TXT'">TXT</option>
+                              <option value="PTR" x-bind:selected="rref.rtype == 'PTR'">PTR</option>
+                            </select></td>
+                          <td><select id="rclass" name="rclass" x-model="rref.rclass"
+                              class="form-select font-monospace">
+                              <option value="IN" selected>IN</option>
+                            </select></td>
+                          <td><input type="number" class="form-control font-monospace" style="width:80px" id="ttl"
+                              name="ttl" placeholder="3600" x-model="rref.ttl"></td>
+                          <template x-if="rref.rtype == 'SOA'">
+                            <td>
+                              <div class="form-group"><label for="mname">mname</label><input type="text"
+                                  class="form-control font-monospace" id="mname" name="mname" placeholder="master NS"
+                                  x-model="rref.rdata.mname"></div>
+                              <div class="form-group"><label for="mname">rname</label><input type="text"
+                                  class="form-control font-monospace" id="rname" name="rname" placeholder="root e-mail (replace @ with .)"
+                                  x-model="rref.rdata.rname"></div>
+                              <div class="form-group"><label for="serial">serial</label><input type="number"
+                                  class="form-control font-monospace" id="serial" name="serial" placeholder="serial (i.e. 1)"
+                                  x-model="rref.rdata.serial"></div>
+                              <div class="form-group"><label for="refresh">refresh</label><input type="number"
+                                  class="form-control font-monospace" id="refresh" name="refresh" placeholder="refresh (seconds)"
+                                  x-model="rref.rdata.refresh"></li>
+                                <div class="form-group"><label for="retry">retry</label><input type="number"
+                                    class="form-control font-monospace" id="retry" name="retry" placeholder="retry (seconds)"
+                                    x-model="rref.rdata.retry"></div>
+                                <div class="form-group"><label for="expire">expire</label><input type="number"
+                                    class="form-control font-monospace" id="expire" name="expire" placeholder="expire (seconds)"
+                                    x-model="rref.rdata.expire"></div>
+                                <div class="form-group"><label for="minimum">minimum</label><input type="number"
+                                    class="form-control font-monospace" id="minimum" name="minimum (seconds)"
+                                    placeholder="minimum" x-model="rref.rdata.minimum"></div>
+                            </td>
+                          </template>
+                          <template x-if="rref.rtype == 'MX'">
+                            <td>
+                              <label for="priority">priority</label><input type="number"
+                                class="form-control font-monospace" id="priority" name="priority" placeholder="priority"
+                                x-model="rref.rdata.priority"><br>
+                              <label for="host">host</label><input type="text" class="form-control font-monospace"
+                                id="host" name="host" placeholder="host" x-model="rref.rdata.host">
+                            </td>
+                          </template>
+                          <template x-if="rref.rtype == 'CAA'">
+                            <td>
+                              <label for="flag">priority</label><input type="number" class="form-control font-monospace"
+                                id="flag" name="flag" placeholder="flag" x-model="rref.rdata.flag"><br>
+                              <label for="tag">tag</label><input type="text" class="form-control font-monospace"
+                                id="tag" name="tag" placeholder="tag" x-model="rref.rdata.tag">
+                              <label for="value">host</label><input type="text" class="form-control font-monospace"
+                                id="value" name="value" placeholder="value" x-model="rref.rdata.value">
+                            </td>
+                          </template>
+                          <template x-if="rref.rtype == 'SRV'">
+                            <td>
+                              <label for="priority">priority</label><input type="number"
+                                class="form-control font-monospace" id="priority" name="priority" placeholder="priority"
+                                x-model="rref.rdata.priority"><br>
+                              <label for="weight">weight</label><input type="number" class="form-control font-monospace"
+                                id="weight" name="weight" placeholder="weight" x-model="rref.rdata.weight"><br>
+                              <label for="port">port</label><input type="number" class="form-control font-monospace"
+                                id="port" name="port" placeholder="port" x-model="rref.rdata.port"><br>
+                              <label for="host">host</label><input type="text" class="form-control font-monospace"
+                                id="host" name="host" placeholder="host" x-model="rref.rdata.host">
+                            </td>
+                          </template>
+                          <template
+                            x-if="rref.rtype != 'SOA' && rref.rtype != 'MX' && rref.rtype != 'CAA' && rref.rtype != 'SRV'">
+                            <td>
+                              <input type="text" class="form-control font-monospace" id="value" name="value"
+                                placeholder="value" x-model="rref.rdata.value">
+                            </td>
+                          </template>
+                          <td>
+                            <button type="button"
+                              @click="status = await submit_rr(zoneedit,rredit,rref); rredit=null; rrs=await get_rrs(zoneedit)"
+                              class="btn btn-primary">Save</button>
+                          </td>
+                          <td></td>
+                        </form>
+                      </tr>
+                    </template>
+                  </div>
+                </template>
+
+                <tr>
+                  <form></form>
+                  <td><button @click="[rrs,rredit] = new_rr(rrs);" class="btn btn-primary">New</button></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  </form>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <!-- RR DDNS links modal -->
+        <div class="modal fade" id="DDNSHelpModal" tabindex="-1" aria-labelledby="DDNSHelpModal" aria-hidden="true">
+          <div class="modal-dialog">
+            <template x-if="ddnshelprr != null">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="DDNSHelpModalLabel">DDNS API description</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Curl prototype:</p>
+                  <pre>
+  curl -X 'GET' \
+  '<span x-text="new URL(window.location.href).protocol"></span>//USERNAME:PASSWORD@<span x-text="new URL(window.location.href).host"></span>{{ prefix }}/update?hostname=<span x-text="ddnshelprr.name"></span>&myip=IP' \
+  -H 'accept: application/json'
+            </pre>
+                  <ul>
+                    <li>Replace USERNAME, PASSWORD and IP with the proper values.</li>
+                    <li>Encode IPv6 addres by replacing colon (":") with %3A .</li>
+                  </ul>
+                  <p>
+                    Example:
+                  </p>
+                  <pre>
+curl -X 'GET' \
+'<span x-text="new URL(window.location.href).protocol"></span>//<span x-text="new URL(window.location.href).host"></span>{{ prefix }}/update?hostname=<span x-text="ddnshelprr.name"></span>/ddns/update?hostname=hroch.d.taaa.eu.&myip=2a02%3Aaa11%3A380%3A300%3A76be%3Aed8e%3Adead%3Ababe' \
+-H 'accept: application/json'
+            </pre>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <div class="container">
+      <div class="row">
+        <template x-if="status['errors']">
+          <div class="text-danger font-weight-bold">
+            <ul>
+              <template x-for="e in status['errors']">
+                <li x-text="e"></li>
+              </template>
+            </ul>
+          </div>
+        </template>
+
+        <template x-if="status['message'] != null">
+          <div class="text-success font-weight-bold">
+            <div class="badge bg-success text-wrap font-weight-bold" style="font-size: large;">
+              <span x-text="status['message']"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div class="container">
+      <footer class="py-3 my-4">
+        <p class="text-center text-muted small">ver 0.1&nbsp;|&nbsp;&copy; 2023 Tomas Hlavacek&nbsp;|&nbsp;License: <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener">GPL-3.0</a></p>
+        <p class="text-center text-muted"><a class="text-muted" href="https://github.com/tmshlvck/ddnsm"><i class="bi-github" style="font-size: 30px"></i></a></p>
+      </footer>
+    </div>
+
+  </div>
+  <script>
+    async function get_rrs(zoneidx) {
+      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rrs');
+      if (!response.ok) alert(`API fetch rrs failed: ${response.status} - ${response.statusText}`);
+      rrs = new Array();
+      body = await response.json();
+      for (rridx in body) {
+        rrs.push(body[rridx]);
+      }
+      return rrs;
+    }
+
+    async function delete_rr(zoneidx, rridx) {
+      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr/' + rridx, { 'method': 'DELETE' });
+      if (!response.ok) alert(`API delete zone failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    async function update_rr(zoneidx, rridx, formdata) {
+      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr/' + rridx, { 'method': 'PUT', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+      if (!response.ok) alert(`API update RR failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    async function create_rr(zoneidx, formdata) {
+      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+      if (!response.ok) alert(`API create RR failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    function new_rr(rrs) {
+      var newidx = rrs.length;
+      console.log(newidx)
+      rrs.push([newidx, { 'rdata': {}, 'rtype': 'A', 'rclass': 'IN', 'ttl': 3600, 'is_new_rr': true, }]);
+      return [rrs, newidx];
+    }
+
+    async function submit_rr(zoneidx, rridx, formdata) {
+      console.log(formdata);
+      if (formdata.is_new_rr == true) {
+        delete formdata['is_new_rr'];
+        return await create_rr(zoneidx, formdata);
+      } else {
+        return await update_rr(zoneidx, rridx, formdata);
+      }
+    }
+
+    async function get_zones() {
+      const response = await fetch('{{ prefix }}/zones');
+      if (!response.ok) alert(`API fetch zones failed: ${response.status} - ${response.statusText}`);
+      return await response.json();
+    }
+
+    async function delete_zone(zoneidx) {
+      const response = await fetch('{{ prefix }}/zone/' + zoneidx, { 'method': 'DELETE' });
+      if (!response.ok) alert(`API delete zone failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    async function create_zone(formdata) {
+      const response = await fetch('{{ prefix }}/zone', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+      if (!response.ok) alert(`API create zone failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    async function get_log(page, pageEntries) {
+      const response = await fetch('{{ prefix }}/logs?' + new URLSearchParams({ 'page': page, 'pageEntries': pageEntries }));
+      if (!response.ok) alert(`API fetch logs failed: ${response.status} - ${response.statusText}`);
+      return await response.json();
+    }
+
+    async function get_remotes() {
+      const response = await fetch('{{ prefix }}/remotes');
+      if (!response.ok) alert(`API fetch remotes failed: ${response.status} - ${response.statusText}`);
+      return await response.json();
+    }
+
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

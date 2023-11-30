@@ -1,0 +1,21 @@
+---
+debug: True
+#root_path: "/ddns" # stripped-prefix
+prefix: "/ddns" # not-stripped prefix
+# listen_port: 8000
+# listen_address: "::"
+logfile: '/var/lib/knot/ddnsm-server.log'
+knot_conf: '/etc/knot/knot-ddnsm.conf'
+knot_zone_dir : '/var/lib/knot/'
+bin_kzonecheck: '/usr/bin/kzonecheck'
+bin_knotc: '/usr/sbin/knotc'
+authentication: True
+users:
+  admin:
+    name: 'admin'
+    hashed_password: '$2b$12$bK054q4D63QVTtr4rRT4FeuQjDgz.kH2yBE/CHt9c/ACJt574E8Fa' # admin
+    dyndns_rrs_authorization:
+      - '*'
+    domains_authorization:
+      - '*'
+    superadmin: True

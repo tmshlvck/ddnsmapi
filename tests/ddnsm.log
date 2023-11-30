@@ -1,0 +1,25 @@
+2023-11-29 23:40:32,962 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-29 23:40:32,964 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-29 23:40:32,997 DEBUG Using selector: EpollSelector
+2023-11-29 23:41:09,123 DEBUG detected 'bcrypt' backend, version '4.0.1'
+2023-11-29 23:41:09,123 DEBUG 'bcrypt' backend lacks $2$ support, enabling workaround
+2023-11-29 23:55:39,116 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-29 23:55:39,118 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-29 23:56:09,913 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-29 23:56:09,915 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-29 23:56:31,473 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-29 23:56:31,476 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:08:14,270 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:08:14,272 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:19:09,821 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:19:09,823 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:19:59,923 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:19:59,926 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:20:25,249 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:20:25,251 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:20:36,907 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:20:36,910 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 00:21:18,317 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 00:21:18,319 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>
+2023-11-30 01:00:48,792 DEBUG Knot interface initialized with conf tests/knot/etc/knot/knot-ddnsm.conf, knotc ./tests/kfake.sh, kzonecheck ./tests/kfake.sh
+2023-11-30 01:00:48,794 DEBUG registered 'bcrypt' handler: <class 'passlib.handlers.bcrypt.bcrypt'>

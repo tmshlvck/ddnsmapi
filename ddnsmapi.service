@@ -1,0 +1,17 @@
+[Unit]
+Description=ddnsmapi systemd service
+After=network.target
+Requires=knot.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/uvicorn ddnsmapi:app --port 8000 --host 127.0.0.1 --proxy-headers
+User=knot
+Group=knot
+WorkingDirectory=/var/lib/ddnsm
+ExecReload=/bin/kill -s HUP $MAINPID
+RestartSec=1
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

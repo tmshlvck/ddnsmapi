@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "ddnsmapi"
+version = "0.1.0"
+description = ""
+authors = ["Tomas Hlavacek <tmshlvck@gmail.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pyyaml = "*"
+uvicorn = "*"
+fastapi = "*"
+bcrypt = "*"
+passlib = "*"
+python-multipart = "*"
+zonefile-parser = "*"
+jinja2 = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+ddnsmapi = "ddnsmapi:main"

@@ -1,0 +1,31 @@
+$ORIGIN d.taaa.eu.;
+$TTL 3600;
+d.taaa.eu.	3600	IN	SOA	krtek.taaa.eu. tmshlvck.gmail.com. 4280 604800 86400 2419200 604800
+d.taaa.eu.	3600	IN	NS	slon.taaa.eu.
+datel.d.taaa.eu.	60	IN	AAAA	2001:1ab0:7e1e:e006::1
+eagle.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:a0c5:70ff:fe95:838
+hranostaj.d.taaa.eu.	60	IN	AAAA	2a00:1028:83c0:250e:b810:cc11:2f19:ecaa
+hroch.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:76be:ed8e:dead:babe
+husa.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:b809:76ff:fe13:9472
+k8s1.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe65:343
+k8s2.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:febd:71b6
+k8s3.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe72:e9ec
+k8sm1.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe66:649f
+k8sw1.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe93:687
+k8sw2.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe0d:4880
+k8sw3.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe7f:8fe0
+kocka.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:7081:2dff:fe67:f4f3
+lama.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:7f63:a026:8a18:3479
+mamut.d.taaa.eu.	60	IN	AAAA	2a00:1028:83c0:250e:e331:1bfd:b5ab:86e9
+minikube.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe34:28ab
+nc.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe5e:8d69
+orel.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:aaa1:59ff:fe56:6566
+owl.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:da58:d7ff:fe00:b328
+pes.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:6c0a:787d:23a:d027
+pipi.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:96a4:8ff:fed9:fe8
+prase.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:310:93fd:6dc9:e211:6c4c
+slepice.d.taaa.eu.	60	IN	AAAA	2a00:1028:83c0:250c:2474:f3a2:3098:e16d
+sova.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:2f30:a027:768e:1156
+tapir.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:310:847e:b787:c678:6b04
+velbloud.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:300:216:3eff:fe16:edf8
+vrana.d.taaa.eu.	60	IN	AAAA	2a02:aa11:380:310:56b2:3ff:fe8d:babe
