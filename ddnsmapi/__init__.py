@@ -47,7 +47,12 @@ def load_appconfig(config_file: str):
         c['users'][u]['domains_authorization'] = set(c['users'][u]['domains_authorization'])
     return c
 
-config = load_appconfig(os.environ.get("DDNSM_CONFIG", '/etc/ddnsm/server.yaml'))
+app_config_file = os.environ.get("DDNSM_CONFIG", '/etc/ddnsm/server.yaml')
+config = load_appconfig(app_config_file)
+
+def save_appconfig(config_file: str, data):
+        with open(config_file, 'w') as fd:
+            fd.write(yaml.dump(data, Dumper=yaml.Dumper))
 
 logcfg = {'format': '%(asctime)s %(levelname)s %(message)s'}
 if config.get('debug', False):
@@ -268,7 +273,44 @@ class Knot:
     
     async def get_remotes(self):
         kc = await self.get_knot_config()
-        return list(enumerate(kc['remote']))
+        return list(enumerate(kc.get('remote',[])))
+    
+    async def create_remote(self, config, user: str | None =None):
+        if not self.is_authorized(user, 'remotes'):
+            logging.warning(f"User {user} not authorized to manipulate remotes!")
+            raise ValueError(f"User {user} not authorized to manipulate remotes!")
+        
+        kc = await self.get_knot_config()
+        kc['remote'].append(config)
+    
+        rok, rmsg = await self.update_config()
+        if not rok:
+            raise RuntimeError(rmsg)
+        
+    async def put_remote(self, remote_idx: int, config, user: str | None =None):
+        if not self.is_authorized(user, 'remotes'):
+            logging.warning(f"User {user} not authorized to manipulate remotes!")
+            raise ValueError(f"User {user} not authorized to manipulate remotes!")
+        
+        kc = await self.get_knot_config()
+        kc['remote'][remote_idx] = config
+        print(f"DEBUG DEBUG: updated remote {remote_idx}")
+    
+        rok, rmsg = await self.update_config()
+        if not rok:
+            raise RuntimeError(rmsg)
+
+    async def delete_remote(self, remote_idx: int, user: str | None =None):
+        if not self.is_authorized(user, 'remotes'):
+            logging.warning(f"User {user} not authorized to manipulate remotes!")
+            raise ValueError(f"User {user} not authorized to manipulate remotes!")
+        
+        kc = await self.get_knot_config()
+        del kc['remote'][remote_idx]
+    
+        rok, rmsg = await self.update_config()
+        if not rok:
+            raise RuntimeError(rmsg)
 
     async def get_rrs(self, zone_idx: int, user: str | None =None):
         z = await self.get_zone(zone_idx, user)
@@ -548,6 +590,13 @@ class Remote(BaseModel):
     id: str
     address: str
 
+class User(BaseModel):
+    username: str
+    password: str
+    name: str
+    superadmin: bool
+    dyndns_rrs_authorization: List[str]
+    domains_authorization: List[str]
 
 def create_app(config):
     knot = Knot(config)
@@ -580,11 +629,6 @@ def create_app(config):
         user = await check_creds(creds)
         return await knot.get_zones(user)
     
-    @app.get(config.get('prefix','')+"/remotes")
-    async def get_remotes(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,Remote]]:
-        user = await check_creds(creds)
-        return await knot.get_remotes()
-        
     @app.post(config.get('prefix','')+"/zone")
     async def post_zone(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone: Zone) -> Status:
         user = await check_creds(creds)
@@ -611,6 +655,51 @@ def create_app(config):
         else:
             logging.debug(f"Zone {zone_id} deleted!")
             return Status(success=True, message=f"Zone {zone_id} deleted!", errors=[])
+
+    @app.get(config.get('prefix','')+"/remotes")
+    async def get_remotes(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,Remote]]:
+        user = await check_creds(creds)
+        return await knot.get_remotes()
+    
+    @app.post(config.get('prefix','')+"/remote")
+    async def post_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote: Remote) -> Status:
+        user = await check_creds(creds)
+    
+        try:
+            await knot.create_remote(remote.model_dump(), user)
+        except Exception as e:
+            logging.exception("Exception in post_remote:")
+            return Status(success=False, message=None, errors=[f"Failed to create remote {remote}:", str(e)])
+        else:
+            logging.debug(f"Zone {remote.id} created!")
+            return Status(success=True, message=f"Zone {remote.id} created!", errors=[])
+    
+    @app.put(config.get('prefix','')+"/remote/{remote_id}")
+    async def put_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote_id: int, remote: Remote) -> Status:
+        user = await check_creds(creds)
+
+        try:
+            await knot.put_remote(remote_id, remote.model_dump(), user)
+        except Exception as e:
+            logging.exception("Exception in put_remote:")
+            return Status(success=False, message=None, errors=[f"Failed to update remote {remote_id}:", str(e)])
+        else:
+            logging.debug(f"Remote {remote_id} updated!")
+            return Status(success=True, message=f"Remote {remote_id} Updated!", errors=[])
+
+    @app.delete(config.get('prefix','')+"/remote/{remote_id}")
+    async def del_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote_id: int) -> Status:
+        user = await check_creds(creds)
+
+        try:
+            await knot.delete_remote(remote_id, user)
+        except Exception as e:
+            logging.exception("Exception in del_remote:")
+            return Status(success=False, message=None, errors=[f"Failed to delete remote {remote_id}:", str(e)])
+        else:
+            logging.debug(f"Remote {remote_id} deleted!")
+            return Status(success=True, message=f"Remote {remote_id} deleted!", errors=[])
+
 
     @app.get(config.get('prefix','')+"/zone/{zone_id}/rrs")
     async def get_rrs(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int) -> List[Tuple[int,RR]]:
@@ -668,6 +757,66 @@ def create_app(config):
                     if i >= page*pageEntries and i < (page+1)*pageEntries:
                         data.append(l)
         return LogData(entries=entries, data=data)
+    
+    @app.get(config.get('prefix','')+"/users")
+    async def get_users(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,User]]:
+        user = await check_creds(creds)
+        res = []
+        for u in config['users']:
+            if u == user or config['users'][user].get('superadmin', False):
+                res.append(User(username=u,name=config['users'][u].get('name',''),
+                            password='', superadmin=config['users'][u].get('superadmin',False),
+                            dyndns_rrs_authorization=config['users'][u].get('dyndns_rrs_authorization',[]),
+                            domains_authorization=config['users'][u].get('domains_authorization',[])))
+        return list(enumerate(res))
+    
+    @app.put(config.get('prefix','')+"/user/{user_name}")
+    async def put_rr(creds: Annotated[HTTPBasicCredentials, Depends(security)], user_name: str, user_data: User) -> Status:
+        user = await check_creds(creds)
+        if user_name == user or config['users'][user].get('superadmin', False):
+            try:
+                if not user_name in config['users']:
+                    config['users'][user_name] = {}
+                if user_data.name:
+                    config['users'][user_name]['name'] = user_data.name
+                if user_data.password:
+                    config['users'][user_name]['hashed_password'] = pwd_context.hash(user_data.password)
+                if user_data.domains_authorization and config['users'][user].get('superadmin', False):
+                    config['users'][user_name]['domains_authorization'] = user_data.domains_authorization
+                if user_data.dyndns_rrs_authorization and config['users'][user].get('superadmin', False):
+                    config['users'][user_name]['dyndns_rrs_authorization'] = user_data.dyndns_rrs_authorization
+                if user_data.domains_authorization and config['users'][user].get('superadmin', False):
+                    config['users'][user_name]['superadmin'] = user_data.superadmin
+
+                save_appconfig(app_config_file, config)
+            except Exception as e:
+                logging.exception(f"Failed user {user_name} update!")
+                return Status(success=False, message=None, errors=[f"User {user_name} update failed", str(e)])
+            logging.debug(f"User {user_name} updated!")
+            return Status(success=True, message=f"User {user_name} updated!", errors=[])
+        else:
+            logging.warning(f"User {user} not authorized to manage user {user_name}!")
+            return Status(success=False, message=None, errors=[f"User {user} not authorized to manage user {user_name}!",])
+
+    @app.delete(config.get('prefix','')+"/user/{user_name}")
+    async def delete_user(creds: Annotated[HTTPBasicCredentials, Depends(security)], user_name: str) -> Status:
+        user = await check_creds(creds)
+
+        if config['users'][user].get('superadmin', False):
+            try:
+                del config['users'][user_name]
+                save_appconfig(app_config_file, config)
+            except Exception as e:
+                logging.exception(f"Failed user {user_name} deletion!")
+                return Status(success=False, message=None, errors=[f"User {user_name} deletion failed", str(e)])
+            logging.debug(f"User {user_name} deleted!")
+            return Status(success=True, message=f"User {user_name} deleted!", errors=[])
+        else:
+            logging.warning(f"User {user} not authorized to manage user {user_name}!")
+            return Status(success=False, message=None, errors=[f"User {user} not authorized to manage user {user_name}!",])
+
+
+
 
 # DynDNS Example HTTP query:
 # POST /nic/update?hostname=subdomain.yourdomain.com&myip=1.2.3.4 HTTP/1.1

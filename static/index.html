@@ -12,8 +12,8 @@
 </head>
 
 <body>
-  <div x-data="{status: {}, zones:[], remotes:[], zoneedit: null, apilinks: false, logview: false}"
-    x-init="zones=await get_zones(); remotes=await get_remotes();">
+  <div x-data="{status: {}, zones:[], remotes:[], users:{}, zoneedit: null, apilinks: false, view: 'main'}"
+    x-init="zones=await get_zones(); remotes=await get_remotes(); users=await get_users();">
     <div>
       <nav class="navbar navbar-expand-lg navbar-light bg-light mx-5">
         <a class="navbar-brand" href="#">DDNSM</a>
@@ -25,10 +25,16 @@
         <div class="collapse navbar-collapse" id="main-nav">
           <ul class="navbar-nav">
             <li class="nav-item active">
-              <a class="nav-link" href="#" @click="zoneedit=null; logview=false">Zones</a>
+              <a class="nav-link" href="#" @click="view='main'">Zones</a>
             </li>
             <li class="nav-item active">
-              <a class="nav-link" href="#" @click="logview=true; zoneedit=null;">Log</a>
+              <a class="nav-link" href="#" @click="view='remotes'">Remotes</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="#" @click="view='users'">Users</a>
+            </li>
+            <li class="nav-item active">
+              <a class="nav-link" href="#" @click="view='log'">Log</a>
             </li>
           </ul>
         </div>
@@ -45,7 +51,7 @@
       </nav>
     </div>
 
-    <template x-if="(zoneedit == null) && (logview == false)">
+    <template x-if="view == 'main'">
       <div class="container" id="content">
         <h3>Zones</h3>
         <div class="row my-5">
@@ -65,7 +71,8 @@
                   <tr class="table-default">
                     <td x-text="zid"></td>
                     <td class="font-monospace">
-                      <template x-if="apilinks"><a x-bind:href="'{{ prefix }}/zone/'+zid+'/rrs'" x-text="z.domain"></a></template>
+                      <template x-if="apilinks"><a x-bind:href="'{{ prefix }}/zone/'+zid+'/rrs'"
+                          x-text="z.domain"></a></template>
                       <template x-if="!apilinks"><span x-text="z.domain"></span></template>
                     </td>
                     <td>
@@ -78,7 +85,8 @@
                       </ul>
                     </td>
                     <td>
-                      <button type="button" @click="zoneedit=zid" class="btn btn-primary">Edit RRs</button>
+                      <button type="button" @click="zoneedit=zid; view='zoneedit'" class="btn btn-primary">Edit
+                        RRs</button>
                     </td>
                     <td>
                       <button type="button" @click="status = await delete_zone(zid); zones=await get_zones()"
@@ -107,7 +115,8 @@
                         <select id="notify" name="notify" x-model="zef.notify" class="form-select font-monospace">
                           <option value="null" selected>-</option>
                           <template x-for="[remid,rem] in remotes">
-                            <option x-bind:value="rem.id"><span x-test="rem.id"></span>(<span x-text="rem.address"></span>)</option>
+                            <option x-bind:value="rem.id"><span x-test="rem.id"></span>(<span
+                                x-text="rem.address"></span>)</option>
                           </template>
                         </select>
                       </div>
@@ -131,7 +140,7 @@
       </div>
     </template>
 
-    <template x-if="logview == true">
+    <template x-if="view == 'log'">
       <div class="container" id="content">
         <h3>Logs</h3>
         <div class="row my-5">
@@ -182,7 +191,7 @@
       </div>
     </template>
 
-    <template x-if="zoneedit != null">
+    <template x-if="(view == 'zoneedit') && (zoneedit != null)">
       <div x-data="{rrs:[], rredit: null, rref: null, ddnshelprr: null}" x-init="rrs=await get_rrs(zoneedit)">
         <div class="container" id="content">
           <h3>Zone <span x-text="zones[zoneedit][1].domain"></span></h3>
@@ -316,20 +325,20 @@
                                   class="form-control font-monospace" id="mname" name="mname" placeholder="master NS"
                                   x-model="rref.rdata.mname"></div>
                               <div class="form-group"><label for="mname">rname</label><input type="text"
-                                  class="form-control font-monospace" id="rname" name="rname" placeholder="root e-mail (replace @ with .)"
-                                  x-model="rref.rdata.rname"></div>
+                                  class="form-control font-monospace" id="rname" name="rname"
+                                  placeholder="root e-mail (replace @ with .)" x-model="rref.rdata.rname"></div>
                               <div class="form-group"><label for="serial">serial</label><input type="number"
-                                  class="form-control font-monospace" id="serial" name="serial" placeholder="serial (i.e. 1)"
-                                  x-model="rref.rdata.serial"></div>
+                                  class="form-control font-monospace" id="serial" name="serial"
+                                  placeholder="serial (i.e. 1)" x-model="rref.rdata.serial"></div>
                               <div class="form-group"><label for="refresh">refresh</label><input type="number"
-                                  class="form-control font-monospace" id="refresh" name="refresh" placeholder="refresh (seconds)"
-                                  x-model="rref.rdata.refresh"></li>
+                                  class="form-control font-monospace" id="refresh" name="refresh"
+                                  placeholder="refresh (seconds)" x-model="rref.rdata.refresh"></li>
                                 <div class="form-group"><label for="retry">retry</label><input type="number"
-                                    class="form-control font-monospace" id="retry" name="retry" placeholder="retry (seconds)"
-                                    x-model="rref.rdata.retry"></div>
+                                    class="form-control font-monospace" id="retry" name="retry"
+                                    placeholder="retry (seconds)" x-model="rref.rdata.retry"></div>
                                 <div class="form-group"><label for="expire">expire</label><input type="number"
-                                    class="form-control font-monospace" id="expire" name="expire" placeholder="expire (seconds)"
-                                    x-model="rref.rdata.expire"></div>
+                                    class="form-control font-monospace" id="expire" name="expire"
+                                    placeholder="expire (seconds)" x-model="rref.rdata.expire"></div>
                                 <div class="form-group"><label for="minimum">minimum</label><input type="number"
                                     class="form-control font-monospace" id="minimum" name="minimum (seconds)"
                                     placeholder="minimum" x-model="rref.rdata.minimum"></div>
@@ -441,6 +450,224 @@ curl -X 'GET' \
       </div>
     </template>
 
+    <template x-if="view == 'users'">
+      <div class="container" id="content">
+        <h3>Users</h3>
+        <div class="row my-5">
+          <div x-data="{ useredit: null, uef: { username: null} }">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Name</th>
+                  <th>Superadmin</th>
+                  <th>Managed domains</th>
+                  <th>DDNS domains</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[uidx,u] in users">
+                  <div style="display:contents">
+                    <template x-if="useredit != uidx">
+                      <tr class="table-default">
+                        <td x-text="u.username"></td>
+                        <td class="font-monospace">
+                          <span x-text="u.name"></span>
+                        </td>
+                        <td>
+                          <template x-if="u.superadmin == true"><span>Yes</span></template>
+                          <template x-if="u.superadmin != true"><span>No</span></template>
+                        </td>
+                        <td>
+                          <ul>
+                            <template x-for="da in u.domains_authorization">
+                              <li><span class="font-monospace" x-text="da"></span></li>
+                            </template>
+                          </ul>
+                        </td>
+                        <td>
+                          <ul>
+                            <template x-for="ddnsa in u.dyndns_rrs_authorization">
+                              <li><span class="font-monospace" x-text="ddnsa"></span></li>
+                            </template>
+                          </ul>
+                        </td>
+                        <td>
+                          <template x-if="useredit == null">
+                            <button type="button" @click="useredit=uidx;" class="btn btn-primary">Edit</button>
+                          </template>
+                          <template x-if="useredit != null">
+                            <button type="button" @click="useredit=uidx;"
+                              class="btn btn-outline-primary">Edit</button>
+                          </template>
+                        </td>
+                        <td>
+                          <button type="button" @click="status=await delete_user(u.userame)"
+                            class="btn btn-outline-danger">Delete</button>
+                        </td>
+                      </tr>
+                    </template>
+                    <template x-if="useredit == uidx">
+                      <tr class="table-active" x-init="uef=u">
+                      <form>  
+                        <td class="font-monospace">
+                            username: <span x-text="uef.username"></span>
+                            <br>
+                            <label for="pass1">password</label>
+                              <input type="password" class="form-control font-monospace" id="pass1" name="pass1"
+                                placeholder="" x-model="uef.password">
+                            <label for="pass2">repeat password</label>
+                            <input type="password" class="form-control font-monospace" id="pass2" name="pass2"
+                                  placeholder="" x-model="uef.password2">
+                        </td>
+                        <td class="font-monospace">
+                          <input type="text" class="form-control font-monospace" id="upname" name="upname"
+                            placeholder="i.e. John Doe" x-model="uef.name">
+                        </td>
+                        <td>
+                          <template x-if="uef.superadmin == true"><span>Yes</span></template>
+                          <template x-if="uef.superadmin != true"><span>No</span></template>
+                          <!--<select id="usuper" name="usuper" x-model="uef.superadmin">
+                          <option value="false">No</option>
+                          <option value="true">Yes</option>
+                        </select>-->
+                        </td>
+                        <td>
+                          <ul>
+                            <template x-for="da in uef.domains_authorization">
+                              <li><span class="font-monospace" x-text="da"></span></li>
+                            </template>
+                          </ul>
+                        </td>
+                        <td>
+                          <ul>
+                            <template x-for="ddnsa in uef.dyndns_rrs_authorization">
+                              <li><span class="font-monospace" x-text="ddnsa"></span></li>
+                            </template>
+                          </ul>
+                        </td>
+                        <td>
+                          <button type="button" @click="status=await submit_user(uef); useredit=null; users=await get_users();" class="btn btn-primary">Save</button>
+                        </td>
+                        <td>
+                          <!--<button type="button" @click="status=await delete_user(u.userame)"
+                            class="btn btn-outline-danger">Delete</button>-->
+                        </td>
+                      </form>
+                      </tr>
+                    </template>
+                  </div>
+                </template>
+                <!--<tr class="table-active">
+                  <form>
+                    <td class="align-middle"><button type="button" @click="[users,useredit]=new_user(users);" class="btn btn-primary">New</button></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </form>
+                </tr>-->
+              </tbody>
+            </table>
+            New users and privileges can be editted only in config file.
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="view == 'remotes'">
+      <div class="container" id="content">
+        <h3>Remote servers</h3>
+        <div class="row my-5">
+          <div x-data="{ ref: { id: null }, remoteedit: null }">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>ID</th>
+                  <th>Address</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[remidx,rem] in remotes">
+                  <div style="display:contents">
+                    <template x-if="remidx != remoteedit">
+                      <tr class="table-default">
+                        <td x-text="remidx"></td>
+                        <td class="font-monospace">
+                          <span x-text="rem.id"></span>
+                        </td>
+                        <td class="font-monospace">
+                          <span x-text="rem.address"></span>
+                        </td>
+                        <td>
+                          <template x-if="remoteedit == null">
+                            <button type="button" @click="remoteedit=remidx;" class="btn btn-primary">Edit</button>
+                          </template>
+                          <template x-if="remoteedit != null">
+                            <button type="button" @click="remoteedit=remidx;"
+                              class="btn btn-outline-primary">Edit</button>
+                          </template>
+                        </td>
+                        <td>
+                          <button type="button"
+                            @click="status=await delete_remote(remidx); remotes=await get_remotes();"
+                            class="btn btn-outline-danger">Delete</button>
+                        </td>
+                      </tr>
+                    </template>
+                    <template x-if="remidx == remoteedit">
+                      <tr class="table-active" x-init="ref=rem">
+                        <form>
+                          <td x-text="remidx"></td>
+                          <td class="font-monospace">
+                            <input type="text" class="form-control font-monospace" id="rid" name="rid"
+                              placeholder="i.e. slave1" x-model="ref.id">
+                          </td>
+                          <td class="font-monospace">
+                            <input type="text" class="form-control font-monospace" id="raddress" name="raddress"
+                              placeholder="i.e. 1.2.3.4@53" x-model="ref.address">
+                          </td>
+                          <td>
+                            <button type="button"
+                              @click="submit_remote(remoteedit, ref); remoteedit=null; remotes=await get_remotes();"
+                              class="btn btn-primary">Save</button>
+                          </td>
+                          <td>
+                            <button type="button"
+                              @click="status=await delete_remote(remidx); remotes=await get_remotes();"
+                              class="btn btn-outline-danger">Delete</button>
+                          </td>
+                        </form>
+                      </tr>
+                    </template>
+                  </div>
+                </template>
+                <tr class="table-active">
+                  <form>
+                    <td class="align-middle"><button type="button" @click="[remotes,remoteedit]=new_remote(remotes)"
+                        class="btn btn-primary">New</button></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                  </form>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </template>
+
     <div class="container">
       <div class="row">
         <template x-if="status['errors']">
@@ -465,8 +692,10 @@ curl -X 'GET' \
 
     <div class="container">
       <footer class="py-3 my-4">
-        <p class="text-center text-muted small">ver 0.1&nbsp;|&nbsp;&copy; 2023 Tomas Hlavacek&nbsp;|&nbsp;License: <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener">GPL-3.0</a></p>
-        <p class="text-center text-muted"><a class="text-muted" href="https://github.com/tmshlvck/ddnsm"><i class="bi-github" style="font-size: 30px"></i></a></p>
+        <p class="text-center text-muted small">ver 0.1&nbsp;|&nbsp;&copy; 2023 Tomas Hlavacek&nbsp;|&nbsp;License: <a
+            href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener">GPL-3.0</a></p>
+        <p class="text-center text-muted"><a class="text-muted" href="https://github.com/tmshlvck/ddnsm"><i
+              class="bi-github" style="font-size: 30px"></i></a></p>
       </footer>
     </div>
 
@@ -490,34 +719,22 @@ curl -X 'GET' \
       return await response.json();
     }
 
-    async function update_rr(zoneidx, rridx, formdata) {
-      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr/' + rridx, { 'method': 'PUT', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
-      if (!response.ok) alert(`API update RR failed: ${response.status} - ${response.statusText}`);
-
-      return await response.json();
-    }
-
-    async function create_rr(zoneidx, formdata) {
-      const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
-      if (!response.ok) alert(`API create RR failed: ${response.status} - ${response.statusText}`);
-
-      return await response.json();
-    }
-
     function new_rr(rrs) {
       var newidx = rrs.length;
-      console.log(newidx)
-      rrs.push([newidx, { 'rdata': {}, 'rtype': 'A', 'rclass': 'IN', 'ttl': 3600, 'is_new_rr': true, }]);
+      rrs.push([newidx, { 'rdata': {}, 'rtype': 'A', 'rclass': 'IN', 'ttl': 3600, 'is_new': true, }]);
       return [rrs, newidx];
     }
 
     async function submit_rr(zoneidx, rridx, formdata) {
-      console.log(formdata);
-      if (formdata.is_new_rr == true) {
-        delete formdata['is_new_rr'];
-        return await create_rr(zoneidx, formdata);
+      if (formdata.is_new == true) {
+        delete formdata['is_new'];
+        const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API create RR failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
       } else {
-        return await update_rr(zoneidx, rridx, formdata);
+        const response = await fetch('{{ prefix }}/zone/' + zoneidx + '/rr/' + rridx, { 'method': 'PUT', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API update RR failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
       }
     }
 
@@ -553,6 +770,71 @@ curl -X 'GET' \
       return await response.json();
     }
 
+    async function delete_remote(remoteidx) {
+      const response = await fetch('{{ prefix }}/remote/' + remoteidx, { 'method': 'DELETE' });
+      if (!response.ok) alert(`API delete remote failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    function new_remote(remotes) {
+      var newidx = remotes.length;
+      remotes.push([newidx, { 'id': '', 'address': '', is_new: true }]);
+      return [remotes, newidx];
+    }
+
+    async function submit_remote(remoteidx, formdata) {
+      if (formdata.is_new == true) {
+        delete formdata['is_new'];
+        const response = await fetch('{{ prefix }}/remote', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API create remote failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
+      } else {
+        const response = await fetch('{{ prefix }}/remote/' + remoteidx, { 'method': 'PUT', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API update remote failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
+      }
+    }
+
+    async function get_users() {
+      const response = await fetch('{{ prefix }}/users');
+      if (!response.ok) alert(`API fetch users failed: ${response.status} - ${response.statusText}`);
+      return await response.json();
+    }
+
+    async function delete_user(username) {
+      const response = await fetch('{{ prefix }}/user/' + username, { 'method': 'DELETE' });
+      if (!response.ok) alert(`API delete user failed: ${response.status} - ${response.statusText}`);
+
+      return await response.json();
+    }
+
+    function new_user(users) {
+      var newidx = users.length;
+      users.push([newidx,{'name': '', superadmin: false, is_new: true}]);
+      return [users,newidx];
+    }
+
+    async function submit_user(formdata) {
+      if ((formdata['password'] != null)||(formdata['password2'] != null)) {
+        if (formdata['password'] != formdata['password2']) {
+          alert('Passwords do not match!');
+          return {errors:['Passwords do not match!']}
+        } else {
+          delete formdata['password2'];
+        }
+      }
+      /*if (formdata.is_new == true) {
+        delete formdata['is_new'];
+        const response = await fetch('{{ prefix }}/user', { 'method': 'POST', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API create user failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
+      } else { */
+        const response = await fetch('{{ prefix }}/user/' + formdata['username'], { 'method': 'PUT', 'headers': { 'Content-Type': 'application/json' }, 'body': JSON.stringify(formdata) });
+        if (!response.ok) alert(`API update user failed: ${response.status} - ${response.statusText}`);
+        return await response.json();
+      //}
+    }
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
