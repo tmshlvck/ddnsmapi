@@ -33,6 +33,7 @@ sudo mkdir -p /var/lib/ddnsm
 cd /var/lib/
 sudo git clone https://github.com/tmshlvck/ddnsmapi.git
 sudo mv ddnsmapi ddnsm
+sudo mkdir /var/lib/ddnsm/logs
 sudo chown -R knot:knot /var/lib/ddnsm
 cd /var/lib/ddnsm
 sudo -u knot poetry build
@@ -106,7 +107,7 @@ according to your `server.yaml` config):
 
 ```
 sudo bash -c 'cat <<EOF >/etc/logrotate.d/ddnsmapi
-/var/lib/knot/ddnsm-server.log {
+/var/lib/ddnsm/logs/ddnsm-server.log {
 	weekly
 	missingok
 	rotate 52
