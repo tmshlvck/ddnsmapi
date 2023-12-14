@@ -624,12 +624,12 @@ def create_app(config):
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Basic"})
 
-    @app.get(config.get('prefix','')+"/zones")
+    @app.get("/zones")
     async def get_zones(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,Zone]]:
         user = await check_creds(creds)
         return await knot.get_zones(user)
     
-    @app.post(config.get('prefix','')+"/zone")
+    @app.post("/zone")
     async def post_zone(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone: Zone) -> Status:
         user = await check_creds(creds)
     
@@ -643,7 +643,7 @@ def create_app(config):
             logging.debug(f"Zone {zone.domain} created!")
             return Status(success=True, message=f"Zone {zone.domain} created!", errors=[])
     
-    @app.delete(config.get('prefix','')+"/zone/{zone_id}")
+    @app.delete("/zone/{zone_id}")
     async def del_zone(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int) -> Status:
         user = await check_creds(creds)
 
@@ -656,12 +656,12 @@ def create_app(config):
             logging.debug(f"Zone {zone_id} deleted!")
             return Status(success=True, message=f"Zone {zone_id} deleted!", errors=[])
 
-    @app.get(config.get('prefix','')+"/remotes")
+    @app.get("/remotes")
     async def get_remotes(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,Remote]]:
         user = await check_creds(creds)
         return await knot.get_remotes()
     
-    @app.post(config.get('prefix','')+"/remote")
+    @app.post("/remote")
     async def post_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote: Remote) -> Status:
         user = await check_creds(creds)
     
@@ -674,7 +674,7 @@ def create_app(config):
             logging.debug(f"Zone {remote.id} created!")
             return Status(success=True, message=f"Zone {remote.id} created!", errors=[])
     
-    @app.put(config.get('prefix','')+"/remote/{remote_id}")
+    @app.put("/remote/{remote_id}")
     async def put_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote_id: int, remote: Remote) -> Status:
         user = await check_creds(creds)
 
@@ -687,7 +687,7 @@ def create_app(config):
             logging.debug(f"Remote {remote_id} updated!")
             return Status(success=True, message=f"Remote {remote_id} Updated!", errors=[])
 
-    @app.delete(config.get('prefix','')+"/remote/{remote_id}")
+    @app.delete("/remote/{remote_id}")
     async def del_remote(creds: Annotated[HTTPBasicCredentials, Depends(security)], remote_id: int) -> Status:
         user = await check_creds(creds)
 
@@ -701,12 +701,12 @@ def create_app(config):
             return Status(success=True, message=f"Remote {remote_id} deleted!", errors=[])
 
 
-    @app.get(config.get('prefix','')+"/zone/{zone_id}/rrs")
+    @app.get("/zone/{zone_id}/rrs")
     async def get_rrs(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int) -> List[Tuple[int,RR]]:
         user = await check_creds(creds)
         return [(i,RR.model_validate(rr)) for i,rr in enumerate(await knot.get_rrs(zone_id, user))]
 
-    @app.post(config.get('prefix','')+"/zone/{zone_id}/rr")
+    @app.post("/zone/{zone_id}/rr")
     async def post_rr(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int, rr: RR) -> Status:
         print(str(rr))
         user = await check_creds(creds)
@@ -720,7 +720,7 @@ def create_app(config):
             logging.debug(f"RR in zone {zone_id} created!")
             return Status(success=True, message=f"RR in zone {zone_id} created!", errors=[])
 
-    @app.put(config.get('prefix','')+"/zone/{zone_id}/rr/{rr_id}")
+    @app.put("/zone/{zone_id}/rr/{rr_id}")
     async def put_rr(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int, rr_id: int, rr: RR) -> Status:
         user = await check_creds(creds)
         try:
@@ -733,7 +733,7 @@ def create_app(config):
             logging.debug(f"RR {rr_id} in zone {zone_id} updated!")
             return Status(success=True, message=f"RR {rr_id} in zone {zone_id} updated!", errors=[])
     
-    @app.delete(config.get('prefix','')+"/zone/{zone_id}/rr/{rr_id}")
+    @app.delete("/zone/{zone_id}/rr/{rr_id}")
     async def delete_rr(creds: Annotated[HTTPBasicCredentials, Depends(security)], zone_id: int, rr_id: int) -> Status:
         user = await check_creds(creds)
         try:
@@ -745,7 +745,7 @@ def create_app(config):
             logging.debug(f"RR {rr_id} in zone {zone_id} deleted!")
             return Status(success=True, message=f"RR {rr_id} in zone {zone_id} deleted!", errors=[])
 
-    @app.get(config.get('prefix','')+"/logs")
+    @app.get("/logs")
     async def get_logs(creds: Annotated[HTTPBasicCredentials, Depends(security)], page: Optional[int] =0, pageEntries: Optional[int] =100) -> LogData:
         user = await check_creds(creds)
         entries = 0
@@ -758,7 +758,7 @@ def create_app(config):
                         data.append(l)
         return LogData(entries=entries, data=data)
     
-    @app.get(config.get('prefix','')+"/users")
+    @app.get("/users")
     async def get_users(creds: Annotated[HTTPBasicCredentials, Depends(security)]) -> List[Tuple[int,User]]:
         user = await check_creds(creds)
         res = []
@@ -770,7 +770,7 @@ def create_app(config):
                             domains_authorization=config['users'][u].get('domains_authorization',[])))
         return list(enumerate(res))
     
-    @app.put(config.get('prefix','')+"/user/{user_name}")
+    @app.put("/user/{user_name}")
     async def put_rr(creds: Annotated[HTTPBasicCredentials, Depends(security)], user_name: str, user_data: User) -> Status:
         user = await check_creds(creds)
         if user_name == user or config['users'][user].get('superadmin', False):
@@ -798,7 +798,7 @@ def create_app(config):
             logging.warning(f"User {user} not authorized to manage user {user_name}!")
             return Status(success=False, message=None, errors=[f"User {user} not authorized to manage user {user_name}!",])
 
-    @app.delete(config.get('prefix','')+"/user/{user_name}")
+    @app.delete("/user/{user_name}")
     async def delete_user(creds: Annotated[HTTPBasicCredentials, Depends(security)], user_name: str) -> Status:
         user = await check_creds(creds)
 
@@ -823,8 +823,8 @@ def create_app(config):
 # Host: domains.google.com
 # Authorization: Basic base64-encoded-auth-string
 
-    @app.get(config.get('prefix','')+"/ddns/update")
-    @app.get(config.get('prefix','')+"/update")
+    @app.get("/ddns/update")
+    @app.get("/update")
     async def get_ddns_update(creds: Annotated[HTTPBasicCredentials, Depends(security)], hostname: str, myip: str):
         user = await check_creds(creds)
         logging.info(f"DYNDNS GET update: user {user} hostname {hostname} myip: {myip}")
@@ -853,19 +853,19 @@ def create_app(config):
 #    
 
     # Web app section
-    #@app.get(config.get('prefix','')+"/", response_class=HTMLResponse)
+    #@app.get("/", response_class=HTMLResponse)
     #async def get_root(creds: Annotated[HTTPBasicCredentials, Depends(security)]):
     #    await check_creds(creds)
-    #    return RedirectResponse(url=config.get('prefix','')+"/static/index.html", status_code=status.HTTP_302_FOUND)
+    #    return RedirectResponse(url="/static/index.html", status_code=status.HTTP_302_FOUND)
     #
-    #app.mount(config.get('prefix','')+"/static", StaticFiles(directory="static"), name="static")
+    #app.mount("/static", StaticFiles(directory="static"), name="static")
 
     templates = Jinja2Templates(directory="static")
     
-    @app.get(config.get('prefix','')+"/", response_class=HTMLResponse)
+    @app.get("/", response_class=HTMLResponse)
     async def get_root(request: Request, creds: Annotated[HTTPBasicCredentials, Depends(security)]):
         await check_creds(creds)
-        return templates.TemplateResponse("index.html", {"request": request, "prefix": config.get('prefix', '')})
+        return templates.TemplateResponse("index.html", {"request": request, "prefix": config.get('root_path', '')})
 
     return app
 
