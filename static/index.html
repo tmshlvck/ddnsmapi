@@ -107,8 +107,13 @@
                     <td>
                       <div class="form-group">
                         <label for="master">master</label>
-                        <input type="text" class="form-control font-monospace" id="master" name="master"
-                          placeholder="0.0.0.0 or 0000:0000:0000::0000" x-model="zef.master">
+                        <select id="master" name="master" x-model="zef.master" class="form-select font-monospace">
+                          <option value="null" selected>-</option>
+                          <template x-for="[remid,rem] in remotes">
+                            <option x-bind:value="rem.id"><span x-test="rem.id"></span>(<span
+                                x-text="rem.address"></span>)</option>
+                          </template>
+                        </select>
                       </div>
                       <div class="form-group">
                         <label for="notify">notify</label>
